@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Vrai ou Bluff ?</title>
+  <style>
+    :root { --pad: 16px; --r: 14px; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #0b1220;
+      color: #e8eefc;
+      line-height: 1.35;
+    }
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 28px var(--pad) 40px;
+    }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--r);
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    h1 { margin: 0 0 10px; font-size: 28px; }
+    p { margin: 10px 0; opacity: 0.95; }
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .muted { opacity: 0.85; font-size: 14px; }
+    .pill {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .statement {
+      margin-top: 14px;
+      font-size: 22px;
+      padding: 14px;
+      border-radius: var(--r);
+      background: rgba(0,0,0,0.20);
+      border: 1px dashed rgba(255,255,255,0.18);
+    }
+    .btns {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 14px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0b1220;
+      background: #e8eefc;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .secondary {
+      background: transparent;
+      color: #e8eefc;
+      border: 1px solid rgba(255,255,255,0.25);
+      font-weight: 600;
+    }
+    .feedback {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      display: none;
+    }
+    .ok { border-color: rgba(60, 221, 136, 0.55); }
+    .no { border-color: rgba(255, 103, 103, 0.60); }
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+      margin-top: 14px;
+    }
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(232,238,252,0.95), rgba(232,238,252,0.65));
+      transition: width 220ms ease;
+    }
+    .footer {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.25);
+    }
+    a { color: #e8eefc; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card" id="screenStart">
+      <h1>Vrai ou Bluff ?</h1>
+      <p>8 manches. Tu cliques sur <strong>Vrai</strong> ou <strong>Bluff</strong>. Score +1 si correct.</p>
+      <p class="muted">Astuce : tu peux aussi utiliser le clavier — <span class="kbd">V</span> pour Vrai, <span class="kbd">B</span> pour Bluff, <span class="kbd">Entrée</span> pour continuer.</p>
+      <div class="footer">
+        <button class="secondary" id="btnAbout">Voir les règles</button>
+        <button id="btnStart">Commencer</button>
+      </div>
+      <div class="feedback" id="aboutBox"></div>
+    </div>
+
+    <div class="card" id="screenGame" style="display:none;">
+      <div class="row">
+        <div class="pill"><strong>Manche</strong> <span id="roundTxt">1/8</span></div>
+        <div class="pill"><strong>Score</strong> <span id="scoreTxt">0</span></div>
+        <div class="pill"><strong>Difficulté</strong> <span id="diffTxt">Facile</span></div>
+      </div>
+
+      <div class="progress" aria-label="Progression">
+        <div class="bar" id="bar"></div>
+      </div>
+
+      <div class="statement" id="statement"></div>
+
+      <div class="btns">
+        <button id="btnTrue">Vrai (V)</button>
+        <button id="btnBluff">Bluff (B)</button>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="footer">
+        <button class="secondary" id="btnRestart">Recommencer</button>
+        <button id="btnNext" disabled>Suivant (Entrée)</button>
+      </div>
+    </div>
+
+    <div class="card" id="screenEnd" style="display:none;">
+      <h1>Fin de partie</h1>
+      <p id="endLine"></p>
+      <p class="muted" id="endHint"></p>
+      <div class="footer">
+        <button class="secondary" id="btnBack">Retour</button>
+        <button id="btnPlayAgain">Rejouer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Banque de questions (évite la politique ; faits stables/connus).
+    // answer: true = Vrai, false = Bluff
+    const QUESTIONS = [
+      // Facile (3)
+      { d: "Facile", s: "Les pieuvres ont trois cœurs.", a: true,  e: "Deux cœurs pompent vers les branchies, un vers le reste du corps." },
+      { d: "Facile", s: "Le miel peut se conserver extrêmement longtemps sans vraiment “tourner”.", a: true, e: "Très peu d’eau + acidité + enzymes : il se conserve très bien (s’il est stocké correctement)." },
+      { d: "Facile", s: "Les dauphins dorment toujours avec les deux yeux fermés.", a: false, e: "Ils peuvent dormir avec une partie du cerveau à la fois et garder un œil ouvert." },
+
+      // Moyen (au moins 3)
+      { d: "Moyen", s: "Le cerveau humain n’utilise que 10% de ses capacités.", a: false, e: "C’est un mythe : différentes zones sont actives selon les tâches, et le cerveau consomme beaucoup d’énergie." },
+      { d: "Moyen", s: "Un jour sur Vénus est plus long qu’une année sur Vénus.", a: true, e: "Vénus tourne très lentement sur elle-même : sa journée (rotation) dépasse sa révolution autour du Soleil." },
+      { d: "Moyen", s: "Les poissons rouges ont forcément une mémoire limitée à 3 secondes.", a: false, e: "Ils peuvent apprendre et retenir des choses sur des durées bien plus longues." },
+      { d: "Moyen", s: "Botaniquement, la banane est une baie.", a: true, e: "En botanique, la définition de “baie” ne correspond pas à l’usage courant." },
+      { d: "Moyen", s: "Le Sahara a déjà été beaucoup plus vert qu’aujourd’hui.", a: true, e: "Des périodes plus humides ont existé, avec davantage de végétation et de lacs." },
+
+      // Difficile (au moins 2)
+      { d: "Difficile", s: "Le platine est plus dense que l’or.", a: true, e: "Le platine est généralement plus dense que l’or (même si les valeurs exactes varient selon la pureté)." },
+      { d: "Difficile", s: "Un photon a une masse au repos non nulle.", a: false, e: "En physique standard, le photon a une masse au repos nulle, même s’il transporte de l’énergie." },
+      { d: "Difficile", s: "La lumière du Soleil met environ 8 minutes pour atteindre la Terre.", a: true, e: "Environ 8 minutes et 20 secondes en moyenne, selon la distance Terre–Soleil." }
+    ];
+
+    const MAX_ROUNDS = 8;
+
+    const el = (id) => document.getElementById(id);
+
+    const screenStart = el("screenStart");
+    const screenGame  = el("screenGame");
+    const screenEnd   = el("screenEnd");
+
+    const btnStart   = el("btnStart");
+    const btnAbout   = el("btnAbout");
+    const aboutBox   = el("aboutBox");
+
+    const roundTxt = el("roundTxt");
+    const scoreTxt = el("scoreTxt");
+    const diffTxt  = el("diffTxt");
+    const statement = el("statement");
+    const feedback  = el("feedback");
+    const bar = el("bar");
+
+    const btnTrue  = el("btnTrue");
+    const btnBluff = el("btnBluff");
+    const btnNext  = el("btnNext");
+    const btnRestart = el("btnRestart");
+
+    const endLine = el("endLine");
+    const endHint = el("endHint");
+    const btnPlayAgain = el("btnPlayAgain");
+    const btnBack = el("btnBack");
+
+    let game = null;
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildRun() {
+      const easy = QUESTIONS.filter(q => q.d === "Facile");
+      const med  = QUESTIONS.filter(q => q.d === "Moyen");
+      const hard = QUESTIONS.filter(q => q.d === "Difficile");
+
+      // 3 faciles, 3 moyennes, 2 difficiles (si dispo)
+      const pick = [];
+      pick.push(...shuffle(easy).slice(0, 3));
+      pick.push(...shuffle(med).slice(0, 3));
+      pick.push(...shuffle(hard).slice(0, 2));
+
+      // Si jamais la banque est trop petite, on complète avec le reste.
+      if (pick.length < MAX_ROUNDS) {
+        const remaining = QUESTIONS.filter(q => !pick.includes(q));
+        pick.push(...shuffle(remaining).slice(0, MAX_ROUNDS - pick.length));
+      }
+
+      return pick.slice(0, MAX_ROUNDS);
+    }
+
+    function resetUIForQuestion() {
+      feedback.style.display = "none";
+      feedback.classList.remove("ok", "no");
+      btnNext.disabled = true;
+      btnTrue.disabled = false;
+      btnBluff.disabled = false;
+    }
+
+    function showScreen(which) {
+      screenStart.style.display = (which === "start") ? "" : "none";
+      screenGame.style.display  = (which === "game")  ? "" : "none";
+      screenEnd.style.display   = (which === "end")   ? "" : "none";
+    }
+
+    function startGame() {
+      game = {
+        run: buildRun(),
+        idx: 0,
+        score: 0,
+        locked: false
+      };
+      showScreen("game");
+      render();
+    }
+
+    function render() {
+      const q = game.run[game.idx];
+      roundTxt.textContent = `${game.idx + 1}/${MAX_ROUNDS}`;
+      scoreTxt.textContent = String(game.score);
+      diffTxt.textContent = q.d;
+      statement.textContent = q.s;
+      bar.style.width = `${(game.idx / MAX_ROUNDS) * 100}%`;
+      resetUIForQuestion();
+    }
+
+    function answer(userTrue) {
+      if (!game || game.locked) return;
+      game.locked = true;
+
+      const q = game.run[game.idx];
+      const correct = (userTrue === q.a);
+
+      if (correct) game.score += 1;
+
+      feedback.style.display = "block";
+      feedback.classList.add(correct ? "ok" : "no");
+      feedback.innerHTML = `
+        <p><strong>${correct ? "Correct." : "Raté."}</strong> Réponse : <strong>${q.a ? "Vrai" : "Bluff"}</strong>.</p>
+        <p class="muted">${q.e}</p>
+      `;
+
+      btnTrue.disabled = true;
+      btnBluff.disabled = true;
+      btnNext.disabled = false;
+
+      game.locked = false;
+    }
+
+    function next() {
+      if (!game) return;
+      if (btnNext.disabled) return;
+
+      game.idx += 1;
+      if (game.idx >= MAX_ROUNDS) {
+        endGame();
+        return;
+      }
+      render();
+    }
+
+    function endGame() {
+      showScreen("end");
+      const s = game.score;
+
+      let comment;
+      if (s <= 2) comment = "Tu es en mode échauffement. Rejoue et vise la régularité.";
+      else if (s <= 5) comment = "Solide. Tu fais de bons choix, mais quelques pièges passent.";
+      else if (s <= 7) comment = "Très bon niveau. Tu repères la plupart des bluffs.";
+      else comment = "Parfait : 8/8. Soit tu es très fort, soit tu lis dans le code.";
+
+      endLine.textContent = `Score final : ${s}/${MAX_ROUNDS}. ${comment}`;
+      endHint.textContent = "Astuce : tu peux enrichir le jeu en ajoutant tes propres affirmations dans la liste QUESTIONS.";
+    }
+
+    // UI events
+    btnStart.addEventListener("click", startGame);
+
+    btnAbout.addEventListener("click", () => {
+      const open = aboutBox.style.display === "block";
+      if (open) {
+        aboutBox.style.display = "none";
+        return;
+      }
+      aboutBox.style.display = "block";
+      aboutBox.innerHTML = `
+        <p><strong>Règles :</strong> 8 manches. Tu choisis <strong>Vrai</strong> ou <strong>Bluff</strong>. +1 si tu as raison.</p>
+        <p class="muted">Difficulté progressive : 3 faciles, 3 moyennes, 2 difficiles (si la banque le permet).</p>
+      `;
+    });
+
+    btnTrue.addEventListener("click", () => answer(true));
+    btnBluff.addEventListener("click", () => answer(false));
+    btnNext.addEventListener("click", next);
+
+    btnRestart.addEventListener("click", startGame);
+    btnPlayAgain.addEventListener("click", startGame);
+
+    btnBack.addEventListener("click", () => {
+      showScreen("start");
+      aboutBox.style.display = "none";
+    });
+
+    // Keyboard
+    window.addEventListener("keydown", (e) => {
+      if (screenGame.style.display === "none") return;
+
+      if (!btnTrue.disabled && (e.key === "v" || e.key === "V")) answer(true);
+      if (!btnBluff.disabled && (e.key === "b" || e.key === "B")) answer(false);
+      if (!btnNext.disabled && (e.key === "Enter")) next();
+    });
+  </script>
+</body>
+</html>
